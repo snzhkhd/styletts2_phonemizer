@@ -5,31 +5,36 @@ from tkinter import filedialog, simpledialog
 import os
 from phonemizer import phonemize
 from phonemizer.separator import Separator
+from ruphon import RUPhon
+from ruaccent import RUAccent
 
-def text_to_ipa(text, language='en-us'):
-    ipa_text = phonemize(
-        text,
-        language=language,
-        backend="espeak",
-        preserve_punctuation=True,
-        with_stress=True,
-    )
-    return ipa_text
+def text_to_ipa(text, global_phonemizer, global_accentizer):
+    # ipa_text = phonemize(
+        # text,
+        # language=language,
+        # backend="espeak",
+        # preserve_punctuation=True,
+        # with_stress=True,
+    # )
+    text = text.strip()
+    accented_text = global_accentizer.process_all(text)
+    ps = global_phonemizer.phonemize(accented_text)
+    return ps
 
-def process_file(input_file_path, output_file_path, option, language='en-us'):
+def process_file(input_file_path, output_file_path, option, global_phonemizer, global_accentizer, language='ru'):
     with open(input_file_path, 'r', encoding='utf-8') as input_file, open(output_file_path, 'w', encoding='utf-8') as output_file:
         for line in input_file:
             parts = line.strip().split('|')
             if len(parts) == 3:
                 audio_path, text, number = parts
                 if option == 'phonemize':
-                    ipa_text = text_to_ipa(text, language)
+                    ipa_text = text_to_ipa(text, global_phonemizer, global_accentizer)
                     output_file.write(f"{audio_path}|{ipa_text}|{number}\n")
                 elif option == 'basename':
                     basename = os.path.basename(audio_path)
                     output_file.write(f"{basename}|{text}|{number}\n")
                 elif option == 'both':
-                    ipa_text = text_to_ipa(text, language)
+                    ipa_text = text_to_ipa(text, global_phonemizer, global_accentizer)
                     basename = os.path.basename(audio_path)
                     output_file.write(f"{basename}|{ipa_text}|{number}\n")
 
@@ -57,7 +62,7 @@ def main():
         return
 
     # Process the file
-    process_file(input_file_path, output_file_path, option)
+    #process_file(input_file_path, output_file_path, option)
 
     print(f"Processing completed. Output saved to: {output_file_path}")
 
